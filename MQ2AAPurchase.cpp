@@ -95,8 +95,9 @@ PLUGIN_API VOID OnPulse(VOID)
 
 PLUGIN_API DWORD OnIncomingChat(PCHAR Line, DWORD Color)
 {
-	if (pAAEvents)
+	if (pAAEvents && (Color == 15 || Color == 334)) // Limit to the colors we know the messages are
 		pAAEvents->Feed(Line);
+	return 0;
 }
 
 // It's possible for the AA manager to know more than 1 AA by that name, so we need to make sure we know this might not be the AA we want
@@ -132,12 +133,12 @@ void LoadINI()
 		if (!GetPrivateProfileString("MQ2AAPurchase_List", key, NULL, szTemp, MAX_STRING, INIFileName))
 			break; // didn't load an INI entry, must be done!
 
-		if (!(token = strtok(szTemp, "|")))
-			continue; // not a well formed INI entry, move on
+		if (!(token = strtok(szTemp, "|"))) // Gotos are fine for errors!
+			goto NextKey; // not a well formed INI entry, move on
 		temp.name = token;
 
 		if (!(token = strtok(NULL, "|")))
-			continue; // not a well formed INI entry, move on
+			goto NextKey; // not a well formed INI entry, move on
 		if (token[0] == 'M' || token[0] == 'm')
 			temp.max = true;
 		else // must be a rank
@@ -157,6 +158,7 @@ void LoadINI()
 				aa_list.push_back(temp);
 		}
 
+		NextKey:
 		// Now we get our next key, this while loop will either leave us at the start of the next key or ...
 		while (*key++) {}
 		if (!key[0]) // the secondary null that terminates
