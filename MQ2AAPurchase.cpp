@@ -3,6 +3,7 @@
 
 // MQ2AAPurchase by mackal
 // Mostly based on RedGuides help page for their MQ2AASpend
+// GPL
 
 
 
