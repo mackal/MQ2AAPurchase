@@ -6,7 +6,6 @@
 // GPL
 
 
-
 #include "../MQ2Plugin.h"
 #include "MQ2AAPurchase.h"
 #include "../Blech/Blech.h"
@@ -111,18 +110,20 @@ PALTABILITY GetAAFromName(const char *name)
 
 void LoadINI()
 {
-	char szTemp[MAX_STRING] = { 0 }, szKey[12] = { 0 }, *token = NULL;
-	int key = 0;
+	char szTemp[MAX_STRING] = { 0 }, szKeys[MAX_STRING] = { 0 }, *token = NULL, *key = NULL;
 	AAEntry temp;
 	aa_list.clear();
 	g_banked = GetPrivateProfileInt("MQ2AAPurchase_Settings", "BankPoints", 40, INIFileName);
 	g_auton = GetPrivateProfileInt("MQ2AAPurchase_Settings", "AutoSpend", 1, INIFileName) != 0 ? true : false;
+	// Get the list of key names
+	if (!GetPrivateProfileString("MQ2AAPurchase_List", NULL, NULL, szKeys, sizeof(szKeys), INIFileName))
+		return; // nothing loaded!
+	key = szKeys; // set to our key
 	while (true) {
 		temp.clear();
 		szTemp[0] = '\0';
-		snprintf(szKey, sizeof(szKey), "%d", key++);
 
-		if (!GetPrivateProfileString("MQ2AAPurchase_List", szKey, NULL, szTemp, MAX_STRING, INIFileName))
+		if (!GetPrivateProfileString("MQ2AAPurchase_List", key, NULL, szTemp, MAX_STRING, INIFileName))
 			break; // didn't load an INI entry, must be done!
 
 		if (!(token = strtok(szTemp, "|")))
@@ -137,19 +138,23 @@ void LoadINI()
 			temp.rank = atoi(token);
 
 		PALTABILITY aa = GetAAFromName(temp.name.c_str());
-		if (!aa)
-			continue; // Not an AA
+		if (aa) {
+			if (PALTABILITY aatemp = GetMaxOwned(aa)) {
+				temp.id = aatemp->next_id;
+				temp.current_rank = aatemp->CurrentRank;
+			} else { // this branch is only entered for AAs we don't have any ranks of
+				temp.id = aa->Index;
+			}
 
-		if (PALTABILITY aatemp = GetMaxOwned(aa)) {
-			temp.id = aatemp->next_id;
-			temp.current_rank = aatemp->CurrentRank;
-		} else { // this branch is only entered for AAs we don't have any ranks of
-			temp.id = aa->Index;
+			// Only add the entry if we're not maxed
+			if ((!temp.max && temp.current_rank < temp.rank) || (temp.max && temp.id != -1))
+				aa_list.push_back(temp);
 		}
 
-		// Only add the entry if we're not maxed
-		if ((!temp.max && temp.current_rank < temp.rank) || (temp.max && temp.id != -1))
-			aa_list.push_back(temp);
+		// Now we get our next key, this while loop will either leave us at the start of the next key or ...
+		while (*key++) {}
+		if (!key[0]) // the secondary null that terminates
+			break;
 	}
 
 	return;
