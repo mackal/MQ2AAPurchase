@@ -93,6 +93,12 @@ PLUGIN_API VOID OnPulse(VOID)
 	}
 }
 
+PLUGIN_API DWORD OnIncomingChat(PCHAR Line, DWORD Color)
+{
+	if (pAAEvents)
+		pAAEvents->Feed(Line);
+}
+
 // It's possible for the AA manager to know more than 1 AA by that name, so we need to make sure we know this might not be the AA we want
 PALTABILITY GetAAFromName(const char *name)
 {
