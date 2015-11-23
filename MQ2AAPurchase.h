@@ -24,7 +24,7 @@ struct AAEntry
 
 PALTABILITY GetAAFromName(const char *name);
 void LoadINI();
-bool HasAa(int id); // there is a client function for this ...
+#define HasAa(x) ((PcZoneClient *)pCharData)->HasAlternateAbility(x, 0, 0, 0)
 PALTABILITY GetMaxOwned(PALTABILITY aa); // there is a client function that works on group ID for this
 VOID cmdAapurchase(PSPAWNINFO pChar, PCHAR szLine);
 

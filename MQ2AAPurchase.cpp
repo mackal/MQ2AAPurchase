@@ -78,9 +78,9 @@ PLUGIN_API VOID OnPulse(VOID)
 
 		if (aa_list[g_position].id != -1 && (aa = pAltAdvManager->GetAAById(aa_list[g_position].id))) {
 			// make sure we are set to buy this rank or max out the AA. CanTrainAbility does the rest of the work (cost, level, etc)
-			if ((aa->CurrentRank <= aa_list[g_position].rank || aa_list[g_position].max) && pAltAdvManager->CanTrainAbility(pPCData, aa, 0, 0, 0)) {
-				snprintf(szTemp, sizeof(szTemp), "buy %d", aa->Index);
-				cmdAlt(GetCharInfo()->pSpawn, szTemp);
+			if ((aa->CurrentRank <= aa_list[g_position].rank || aa_list[g_position].max) && pAltAdvManager->CanTrainAbility((PcZoneClient *)pCharData, (CAltAbilityData *)aa, 0, 0, 0)) {
+				snprintf(szTemp, sizeof(szTemp), "/alt buy %d", aa->Index);
+				EzCommand(szTemp);
 				aa_list[g_position].id = aa->next_id;
 				aa_list[g_position].current_rank = aa->CurrentRank;
 			} else {
@@ -95,7 +95,7 @@ PLUGIN_API VOID OnPulse(VOID)
 
 PLUGIN_API DWORD OnIncomingChat(PCHAR Line, DWORD Color)
 {
-	if (pAAEvents && (Color == 15 || Color == 334)) // Limit to the colors we know the messages are
+	if (pAAEvents && (Color == 15 || Color == 334)) // Limit to the colors we know the messages are -- I still need to double check the gaining an AA color ... think its 334
 		pAAEvents->Feed(Line);
 	return 0;
 }
@@ -202,7 +202,7 @@ VOID cmdAapurchase(PSPAWNINFO pChar, PCHAR szLine)
 			g_banked = 0;
 		} else if (IsNumber(szArg)) {
 			g_banked = atoi(szArg);
-			WriteChatf("MQ2AAPurcahse. Will now bank %d AAs before purchasing.", g_banked);
+			WriteChatf("MQ2AAPurchase. Will now bank %d AAs before purchasing.", g_banked);
 		}
 		char szTemp[255] = { 0 };
 		snprintf(szTemp, sizeof(szTemp), "%d", g_banked);
@@ -211,23 +211,42 @@ VOID cmdAapurchase(PSPAWNINFO pChar, PCHAR szLine)
 	}
 
 	if (!_stricmp(szArg, "add")) {
-		// ADD SHIT
+		GetArg(szArg, szLine, 2);
+		if (szArg[0] == '\0') {
+			WriteChatf("MQ2AAPurchase add usage:");
+			WriteChatf("/aapurchase add \"Name\" level");
+			WriteChatf("Name is the name of the AA, level is to the rank you want or M for max");
+			return;
+		}
+
+		PALTABILITY aa = GetAAFromName(szArg);
+		if (!aa) {
+			WriteChatf("Couldn't find AA by the name of %s", szArg);
+			return;
+		}
+		AAEntry temp;
+		temp.clear();
+		temp.name = szArg;
+
+		GetArg(szArg, szLine, 3);
+		if (szArg[0] == '\0' || szArg[0] == 'M' || szArg[0] == 'm')
+			temp.max = true;
+		else
+			temp.rank = atoi(szArg);
+
+		aa = GetMaxOwned(aa);
+		temp.current_rank = aa->CurrentRank;
+		temp.id = aa->next_id;
+
+		char szKey[12] = { 0 };
+		snprintf(szKey, sizeof(szKey), "%d", aa->ID); // we use the group ID by default
+		char szValue[MAX_STRING] = { 0 };
+		snprintf(szValue, sizeof(szValue), "%s|%s", temp.name.c_str(), temp.max ? "M" : szArg); // szArg is still rank in this case
+
+		WritePrivateProfileString("MQ2AAPurchase_List", szKey, szValue, INIFileName);
+		aa_list.push_back(temp);
 		return;
 	}
-}
-
-// There is a client function for this ...
-bool HasAa(int id)
-{
-	PCHARINFO2 pChar2 = GetCharInfo2();
-	if (!pChar2)
-		return false;
-
-	for (int i = 0; i < AA_CHAR_MAX_REAL; ++i)
-		if (pChar2->AAList[i].AAIndex == id)
-			return true;
-
-	return false;
 }
 
 PALTABILITY GetMaxOwned(PALTABILITY aa)
