@@ -21,6 +21,7 @@ PLUGIN_API VOID InitializePlugin(VOID)
 
 	pAAEvents->AddEvent("You have gained an ability point!  You now have #*# ability point.", GainedSomething);
 	pAAEvents->AddEvent("You have gained an ability point!  You now have #*# ability points.", GainedSomething);
+	pAAEvents->AddEvent("You have gained #*# ability point(s)!  You now have #*# ability point(s).", GainedSomething);
 	pAAEvents->AddEvent("You have gained a level! Welcome to level #*#!", GainedSomething);
 	pAAEvents->AddEvent("You have gained #*# levels! Welcome to level #*#!", GainedSomething);
 
@@ -95,7 +96,7 @@ PLUGIN_API VOID OnPulse(VOID)
 
 PLUGIN_API DWORD OnIncomingChat(PCHAR Line, DWORD Color)
 {
-	if (pAAEvents && (Color == 15 || Color == 334)) // Limit to the colors we know the messages are -- I still need to double check the gaining an AA color ... think its 334
+	if (pAAEvents && Color == 15) // Limit to the colors we know the messages are
 		pAAEvents->Feed(Line);
 	return 0;
 }
