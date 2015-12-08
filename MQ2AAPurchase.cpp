@@ -80,8 +80,8 @@ PLUGIN_API VOID OnPulse(VOID)
 		if (aa_list[g_position].id != -1 && (aa = pAltAdvManager->GetAAById(aa_list[g_position].id))) {
 			// make sure we are set to buy this rank or max out the AA. CanTrainAbility does the rest of the work (cost, level, etc)
 			if ((aa->CurrentRank <= aa_list[g_position].rank || aa_list[g_position].max) && pAltAdvManager->CanTrainAbility((PcZoneClient *)pCharData, (CAltAbilityData *)aa, 0, 0, 0)) {
-				snprintf(szTemp, sizeof(szTemp), "buy %d", aa->Index);
-				cmdAlt(GetCharInfo()->pSpawn, szTemp);
+				snprintf(szTemp, sizeof(szTemp), "/alt buy %d", aa->Index);
+				EzCommand(szTemp);
 				aa_list[g_position].id = aa->next_id;
 				aa_list[g_position].current_rank = aa->CurrentRank;
 			} else {
