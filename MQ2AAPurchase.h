@@ -29,7 +29,8 @@ PALTABILITY GetMaxOwned(PALTABILITY aa); // there is a client function that work
 VOID cmdAapurchase(PSPAWNINFO pChar, PCHAR szLine);
 
 // Blech callbacks
-void __stdcall GainedSomething(unsigned int ID, void *pData, PBLECHVALUE pValues);
+void __stdcall GainedAa(unsigned int ID, void *pData, PBLECHVALUE pValues);
+void __stdcall GainedLevel(unsigned int ID, void *pData, PBLECHVALUE pValues);
 
 DWORD g_banked = 0;
 bool g_auton = false;

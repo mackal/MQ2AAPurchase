@@ -19,11 +19,11 @@ PLUGIN_API VOID InitializePlugin(VOID)
 	DebugSpewAlways("Initializing MQ2AAPurchase");
 	pAAEvents = new Blech('#');
 
-	pAAEvents->AddEvent("You have gained an ability point!  You now have #*# ability point.", GainedSomething);
-	pAAEvents->AddEvent("You have gained an ability point!  You now have #*# ability points.", GainedSomething);
-	pAAEvents->AddEvent("You have gained #*# ability point(s)!  You now have #*# ability point(s).", GainedSomething);
-	pAAEvents->AddEvent("You have gained a level! Welcome to level #*#!", GainedSomething);
-	pAAEvents->AddEvent("You have gained #*# levels! Welcome to level #*#!", GainedSomething);
+	pAAEvents->AddEvent("You have gained an ability point!  You now have #pnts# ability point.", GainedAa);
+	pAAEvents->AddEvent("You have gained an ability point!  You now have #pnts# ability points.", GainedAa);
+	pAAEvents->AddEvent("You have gained #*# ability point(s)!  You now have #pnts# ability point(s).", GainedAa);
+	pAAEvents->AddEvent("You have gained a level! Welcome to level #*#!", GainedLevel);
+	pAAEvents->AddEvent("You have gained #*# levels! Welcome to level #*#!", GainedLevel);
 
 	AddCommand("/aapurchase", cmdAapurchase);
 }
@@ -80,8 +80,8 @@ PLUGIN_API VOID OnPulse(VOID)
 		if (aa_list[g_position].id != -1 && (aa = pAltAdvManager->GetAAById(aa_list[g_position].id))) {
 			// make sure we are set to buy this rank or max out the AA. CanTrainAbility does the rest of the work (cost, level, etc)
 			if ((aa->CurrentRank <= aa_list[g_position].rank || aa_list[g_position].max) && pAltAdvManager->CanTrainAbility((PcZoneClient *)pCharData, (CAltAbilityData *)aa, 0, 0, 0)) {
-				snprintf(szTemp, sizeof(szTemp), "/alt buy %d", aa->Index);
-				EzCommand(szTemp);
+				snprintf(szTemp, sizeof(szTemp), "buy %d", aa->Index);
+				cmdAlt(GetCharInfo()->pSpawn, szTemp);
 				aa_list[g_position].id = aa->next_id;
 				aa_list[g_position].current_rank = aa->CurrentRank;
 			} else {
@@ -264,7 +264,29 @@ PALTABILITY GetMaxOwned(PALTABILITY aa)
 	return NULL;
 }
 
-void __stdcall GainedSomething(unsigned int ID, void *pData, PBLECHVALUE pValues)
+void __stdcall GainedAa(unsigned int ID, void *pData, PBLECHVALUE pValues)
+{
+	if (!g_auton)
+		return;
+
+	// You maybe thinking that just checking AAPoints in CHARINFO2 would be faster, which it would be
+	// BUT the message arrives BEFORE that is updated, so checking that is useless here.
+	int aas = 0;
+	while (pValues) {
+		if (!strncmp(pValues->Name, "pnts", 4)) {
+			aas = atoi(pValues->Value);
+			break;
+		}
+		pValues = pValues->pNext;
+	}
+
+	if (g_banked > aas)
+		return;
+
+	g_autopurchase = true;
+}
+
+void __stdcall GainedLevel(unsigned int ID, void *pData, PBLECHVALUE pValues)
 {
 	if (!g_auton || g_banked > GetCharInfo2()->AAPoints)
 		return;
