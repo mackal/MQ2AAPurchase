@@ -82,7 +82,7 @@ PLUGIN_API VOID OnPulse(VOID)
 			if ((aa->CurrentRank <= aa_list[g_position].rank || aa_list[g_position].max) && pAltAdvManager->CanTrainAbility((PcZoneClient *)pCharData, (CAltAbilityData *)aa, 0, 0, 0)) {
 				snprintf(szTemp, sizeof(szTemp), "/alt buy %d", aa->Index);
 				EzCommand(szTemp);
-				aa_list[g_position].id = aa->next_id;
+				aa_list[g_position].id = aa->NextGroupAbilityId;
 				aa_list[g_position].current_rank = aa->CurrentRank;
 			} else {
 				g_position++;
@@ -118,7 +118,7 @@ PALTABILITY GetAAFromName(const char *name)
 
 void LoadINI()
 {
-	char szTemp[MAX_STRING] = { 0 }, szKeys[MAX_STRING] = { 0 }, *token = NULL, *key = NULL;
+	char szTemp[MAX_STRING] = { 0 }, szKeys[MAX_STRING] = { 0 }, *token = NULL, *key = NULL, *next = NULL;
 	AAEntry temp;
 	aa_list.clear();
 	g_banked = GetPrivateProfileInt("MQ2AAPurchase_Settings", "BankPoints", 40, INIFileName);
@@ -134,11 +134,11 @@ void LoadINI()
 		if (!GetPrivateProfileString("MQ2AAPurchase_List", key, NULL, szTemp, MAX_STRING, INIFileName))
 			break; // didn't load an INI entry, must be done!
 
-		if (!(token = strtok(szTemp, "|"))) // Gotos are fine for errors!
+		if (!(token = strtok_s(szTemp, "|", &next))) // Gotos are fine for errors!
 			goto NextKey; // not a well formed INI entry, move on
 		temp.name = token;
 
-		if (!(token = strtok(NULL, "|")))
+		if (!(token = strtok_s(NULL, "|", &next)))
 			goto NextKey; // not a well formed INI entry, move on
 		if (token[0] == 'M' || token[0] == 'm')
 			temp.max = true;
@@ -148,7 +148,7 @@ void LoadINI()
 		PALTABILITY aa = GetAAFromName(temp.name.c_str());
 		if (aa) {
 			if (PALTABILITY aatemp = GetMaxOwned(aa)) {
-				temp.id = aatemp->next_id;
+				temp.id = aatemp->NextGroupAbilityId;
 				temp.current_rank = aatemp->CurrentRank;
 			} else { // this branch is only entered for AAs we don't have any ranks of
 				temp.id = aa->Index;
@@ -237,7 +237,7 @@ VOID cmdAapurchase(PSPAWNINFO pChar, PCHAR szLine)
 
 		aa = GetMaxOwned(aa);
 		temp.current_rank = aa->CurrentRank;
-		temp.id = aa->next_id;
+		temp.id = aa->NextGroupAbilityId;
 
 		char szKey[12] = { 0 };
 		snprintf(szKey, sizeof(szKey), "%d", aa->ID); // we use the group ID by default
