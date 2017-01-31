@@ -257,7 +257,7 @@ PALTABILITY GetMaxOwned(PALTABILITY aa)
 		return aa;
 	// We don't have the first AA we found in the AA manager, lets find the highest we own
 	temp = aa;
-	while ((temp = pAltAdvManager->GetAAById(temp->next_id)))
+	while ((temp = pAltAdvManager->GetAAById(temp->NextGroupAbilityId)))
 		if (HasAa(temp->Index))
 			return temp;
 	// We looped over all the AAs the manager knows about and don't own any! must not own it
