@@ -96,8 +96,11 @@ PLUGIN_API VOID OnPulse(VOID)
 
 PLUGIN_API DWORD OnIncomingChat(PCHAR Line, DWORD Color)
 {
-	if (pAAEvents && Color == 15) // Limit to the colors we know the messages are
-		pAAEvents->Feed(Line);
+	if (pAAEvents && Color == 15) {// Limit to the colors we know the messages are
+		char szLine[MAX_STRING] = { 0 };
+		strcpy_s(szLine, Line);
+		pAAEvents->Feed(szLine);
+	}
 	return 0;
 }
 
